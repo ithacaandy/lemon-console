@@ -10,4 +10,8 @@ Each physical monitor needs a distinct Guacamole connection configured on the se
 
 The initial release includes the static workspace. The Mac clipboard bridge is deferred pending separate packaging and review. Keep secrets and live backups outside this folder.
 
-Release draft. Review licensing and attribution and test against a separate Guacamole installation before publication.
+Release draft. Browser testing against a separate Guacamole installation is pending.
+
+## License and attribution
+
+Lemon Console is licensed under the [Apache License 2.0](LICENSE). It is an independent companion to [Apache Guacamole](https://guacamole.apache.org/) and is not affiliated with or endorsed by the Apache Software Foundation.
