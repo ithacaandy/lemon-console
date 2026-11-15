@@ -12,6 +12,10 @@ The initial release includes the static workspace. The Mac clipboard bridge is d
 
 Release draft. Browser testing against a separate Guacamole installation is pending.
 
+## Phone controls
+
+On a phone, pick a desktop from the header dropdown. Tap the keyboard icon to enable Guacamole Text input and tap it again to turn it off. Tap a file once to select it or twice quickly to open it. Pinch to zoom and slide two fingers together to pan. A zoomed desktop has 48 pixels of extra room at each edge. Returning to the page retries a dropped desktop connection once.
+
 ## License and attribution
 
 Lemon Console is licensed under the [Apache License 2.0](LICENSE). It is an independent companion to [Apache Guacamole](https://guacamole.apache.org/) and is not affiliated with or endorsed by the Apache Software Foundation.

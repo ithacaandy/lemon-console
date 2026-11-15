@@ -12,3 +12,14 @@ body > header .toolbar [hidden]{display:none}#fullscreen{font-size:18px;line-hei
 body > header{display:grid;grid-template-columns:minmax(max-content,1fr) max-content minmax(max-content,1fr)}body > header > nav{justify-self:center}body > header > .toolbar{justify-self:end}
 
 [hidden]{display:none!important}#setup{display:block;max-width:48rem;margin:3rem auto;padding:1.5rem}#open-direct{padding:8px 14px}
+#mobile-computer[hidden]{display:none}
+@media (max-width:680px), (max-width:950px) and (pointer:coarse) and (max-height:550px){
+ body{height:100dvh}
+ body > header{grid-template-columns:auto minmax(0,1fr) auto;gap:5px;padding:4px 6px}
+ body > header > nav,#layout-picker{display:none}
+ #mobile-computer{width:100%;min-width:0;min-height:40px;background:#263229;color:inherit;border:1px solid #65775f;border-radius:7px}
+ body > header strong{font-size:11px}
+ body > header button{min-height:40px}
+ #desktops{padding:3px;gap:0}
+}
+@media (hover:none){#phone-keyboard[aria-pressed="false"]:hover{background:#263229;color:#dce8d8;border-color:#465748}}
