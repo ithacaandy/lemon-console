@@ -15,3 +15,5 @@ Release draft. Browser testing against a separate Guacamole installation is pend
 ## License and attribution
 
 Lemon Console is licensed under the [Apache License 2.0](LICENSE). It is an independent companion to [Apache Guacamole](https://guacamole.apache.org/) and is not affiliated with or endorsed by the Apache Software Foundation.
+
+See the [remote access guide](REMOTE-ACCESS.md) for HTTPS, dynamic DNS, and testing from outside your network.
