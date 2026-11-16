@@ -10,11 +10,9 @@ Each physical monitor needs a distinct Guacamole connection configured on the se
 
 The initial release includes the static workspace. The Mac clipboard bridge is deferred pending separate packaging and review. Keep secrets and live backups outside this folder.
 
-Release draft. Browser testing against a separate Guacamole installation is pending.
-
 ## Phone controls
 
-On a phone, pick a desktop from the header dropdown. Tap the keyboard icon to enable Guacamole Text input and tap it again to turn it off. Tap a file once to select it or twice quickly to open it. Pinch to zoom and slide two fingers together to pan. A zoomed desktop has 48 pixels of extra room at each edge. Returning to the page retries a dropped desktop connection once.
+On a phone, tap the desktop badge to switch desktops or open Guacamole controls inside Lemon Console. Tap the Lemon Console logo to switch between Guacamole controls and your last desktop. The desktop fills the available browser space. The keyboard row stays visible while connected. Tap Show to open your phone keyboard or Hide to dismiss it. Tap a file once to select it or twice quickly to open it. Pinch to zoom and slide two fingers together to pan. A zoomed desktop has 48 pixels of extra room at each edge. Returning to the page retries a dropped desktop connection once.
 
 ## License and attribution
 

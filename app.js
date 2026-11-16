@@ -48,7 +48,7 @@ for(const {id,name} of connections){
  document.querySelector('#desktops').append(pane);
 }
 
-const panes=[...document.querySelectorAll('main section')];
+const panes=[...document.querySelectorAll('main section[data-id]')];
 let focused=localStorage.getItem('lemon.focus')||connections[0].id;
 if(!panes.some(p=>p.dataset.id===focused))focused=connections[0].id;
 let layout=localStorage.getItem('lemon.layout')||'single';
@@ -66,24 +66,58 @@ const computerButtons=[...document.querySelectorAll('[data-computer]')];
 for(const button of computerButtons){
  mobileComputer.add(new Option(button.textContent,button.dataset.computer));
 }
+const guacamoleOption='guacamole:controls';
+const guacamolePane=document.querySelector('#phone-guacamole');
+const phoneBrand=document.querySelector('.phone-brand');
+let showGuacamole=false;
+mobileComputer.add(new Option('Guacamole controls',guacamoleOption));
 mobileComputer.onchange=()=>{
- computerButtons.find(button=>button.dataset.computer===mobileComputer.value)?.click();
+ showGuacamole=mobileComputer.value===guacamoleOption;
+ if(showGuacamole)render();
+ else computerButtons.find(button=>button.dataset.computer===mobileComputer.value)?.click();
+};
+phoneBrand.onclick=()=>{
+ showGuacamole=!showGuacamole;
+ render();
+ if(showGuacamole)mobileComputer.focus({preventScroll:true});
 };
 phoneLayout.addEventListener('change',render);
 const keyboardEnabled=new WeakSet();
 function render(){
  const displayLayout=phoneLayout.matches?'single':layout;
+ if(!phoneLayout.matches)showGuacamole=false;
+ guacamolePane.hidden=!showGuacamole;
+ phoneBrand.setAttribute('aria-label',showGuacamole?'Return to Lemon Console desktop':'Open Guacamole controls');
+ if(showGuacamole){
+  const frame=guacamolePane.querySelector('iframe');
+  if(!frame.hasAttribute('src'))frame.src='/guacamole/';
+ }
  mobileComputer.hidden=!phoneLayout.matches;
- document.querySelector('#phone-keyboard').hidden=!phoneLayout.matches;
- mobileComputer.value=focused;
- const selectedFrame=panes.find(pane=>pane.dataset.id===focused)?.querySelector('iframe');
- document.querySelector('#phone-keyboard').setAttribute('aria-pressed',String(keyboardEnabled.has(selectedFrame?.contentDocument)));
+ for(const pane of panes){
+  const heading=pane.querySelector('h2');
+  if(phoneLayout.matches){
+   heading.removeAttribute('role');
+   heading.removeAttribute('tabindex');
+   heading.removeAttribute('aria-label');
+   if(!showGuacamole && pane.dataset.id===focused && mobileComputer.parentElement!==heading)
+    heading.append(mobileComputer);
+  }else{
+   heading.setAttribute('role','button');
+   heading.tabIndex=0;
+   heading.setAttribute('aria-label','Select '+pane.querySelector('iframe').title);
+  }
+ }
+ if(showGuacamole){
+  const heading=guacamolePane.querySelector('h2');
+  if(mobileComputer.parentElement!==heading)heading.append(mobileComputer);
+ }
+ mobileComputer.value=showGuacamole?guacamoleOption:focused;
  document.querySelector('main').dataset.layout=displayLayout;
  let other=localStorage.getItem('lemon.second')||'2';
  if(other===focused||!panes.some(p=>p.dataset.id===other))other=panes.find(p=>p.dataset.id!==focused)?.dataset.id||'';
  const selector=document.querySelector('#second-computer'); selector.value=other; [...selector.options].forEach(o=>o.disabled=o.value===focused); selector.hidden=selector.disabled=displayLayout!=='split'; selector.labels[0].hidden=selector.hidden;
  const visible=displayLayout==='single'?[focused]:displayLayout==='split'?[focused,other]:[focused,...connections.map(connection=>connection.id).filter(id=>id!==focused).slice(0,2)];
- for(const pane of panes){pane.hidden=!visible.includes(pane.dataset.id);pane.classList.toggle('focus',pane.dataset.id===focused);if(!pane.hidden)openPane(pane);}
+ for(const pane of panes){pane.hidden=showGuacamole || !visible.includes(pane.dataset.id);pane.classList.toggle('focus',pane.dataset.id===focused);if(!pane.hidden)openPane(pane);}
  document.querySelectorAll('[data-computer]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.computer===focused)));
  document.querySelector('#layout-picker').value=layout;
  localStorage.setItem('lemon.focus',focused);localStorage.setItem('lemon.layout',layout);
@@ -128,11 +162,11 @@ document.querySelector('#second-computer').onchange=event=>{localStorage.setItem
 for(const pane of panes){
  const heading=pane.querySelector('h2');
  heading.tabIndex=0;heading.setAttribute('role','button');heading.setAttribute('aria-label','Select '+pane.querySelector('iframe').title);
- const select=()=>{if(document.fullscreenElement){document.exitFullscreen().catch(()=>workspaceStatus("Press Esc to exit full screen."));return;} focused=pane.dataset.id;render();};
- heading.onclick=select;heading.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select();}};
+ const select=()=>{if(phoneLayout.matches)return;if(document.fullscreenElement){document.exitFullscreen().catch(()=>workspaceStatus("Press Esc to exit full screen."));return;} focused=pane.dataset.id;render();};
+ heading.onclick=select;heading.onkeydown=e=>{if(!phoneLayout.matches && (e.key==='Enter'||e.key===' ')){e.preventDefault();select();}};
 }
 function showDirect(pane){
- if(pane.dataset.id!==focused)return;
+ if(showGuacamole || pane.dataset.id!==focused)return;
  const link=document.querySelector('#open-direct');
  link.href=pane.querySelector('iframe').src;
  link.hidden=false;
@@ -231,7 +265,10 @@ function updateSessions(){
    badge.textContent=state.tunnelUnstable?'Connection unstable':labels[state.connectionState]||'Status unavailable';
    pane.dataset.connection=state.connectionState;
    if(state.connectionState==='CONNECTED'){
-    if(phoneLayout.matches)bindPhoneDoubleTap(pane,session.client.client);
+    if(phoneLayout.matches){
+     bindPhoneDoubleTap(pane,session.client.client);
+     setupPhoneKeyboard(pane);
+    }
     const frame=pane.querySelector('iframe');
     const active=document.activeElement;
     if(!initialDesktopFocus && !phoneLayout.matches && pane.dataset.id===focused
@@ -262,41 +299,102 @@ document.addEventListener('fullscreenchange',()=>{
  button.setAttribute('aria-pressed',String(Boolean(document.fullscreenElement)));
  for(const pane of panes){try{pane.querySelector('iframe').contentWindow.dispatchEvent(new Event('resize'));}catch{}}
 });
-render();
-updateSessions();setInterval(updateSessions,750);
-const phoneKeyboardButton=document.querySelector('#phone-keyboard');
-
-phoneKeyboardButton.onclick=()=>{
+function setupPhoneKeyboard(pane){
  if(!phoneLayout.matches)return;
  try{
-  const frame=panes.find(pane=>pane.dataset.id===focused).querySelector('iframe');
+  const frame=pane.querySelector('iframe');
   const w=frame.contentWindow;
   const doc=w.document;
   const root=w.angular?.element(doc.body).injector()?.get('$rootScope');
-  if(!root)throw Error('Wait for the desktop to connect.');
-  const closing=keyboardEnabled.has(doc) || Boolean(doc.querySelector('guac-text-input, guac-osk'));
-  if(closing)doc.activeElement?.blur();
-  root.$apply(()=>root.$broadcast('guacShowMenu'));
-  try{
-   const mode=doc.querySelector(closing?'#ime-none':'#ime-text');
-   if(!mode)throw Error('Keyboard mode is unavailable.');
-   if(!mode.checked)mode.click();
-  }finally{
-   root.$apply(()=>root.$broadcast('guacHideMenu'));
-  }
-  if(closing){
-   releasePhoneModifiers(panes.find(pane=>pane.dataset.id===focused));
-   keyboardEnabled.delete(doc);
-   phoneKeyboardButton.setAttribute('aria-pressed','false');
-   phoneKeyboardButton.blur();
-   workspaceStatus('');
-   return;
+  if(!root || keyboardEnabled.has(doc))return;
+  const viewport=window.visualViewport;
+  const closedViewportHeight=viewport ? viewport.height*viewport.scale : window.innerHeight;
+  const view=doc.querySelector('.client-view');
+  const clientScope=view && w.angular.element(view).scope();
+  if(clientScope?.menu){
+   // Changing modes directly avoids the menu's separate focus transition.
+   root.$apply(()=>{
+    clientScope.menu.inputMethod='text';
+    clientScope.menu.shown=false;
+   });
+  }else{
+   root.$apply(()=>root.$broadcast('guacShowMenu'));
+   try{
+    const mode=doc.querySelector('#ime-text');
+    if(!mode)throw Error('Keyboard mode is unavailable.');
+    if(!mode.checked)mode.click();
+   }finally{
+    root.$apply(()=>root.$broadcast('guacHideMenu'));
+   }
   }
   keyboardEnabled.add(doc);
-  phoneKeyboardButton.setAttribute('aria-pressed','true');
-  const field=doc.querySelector('guac-text-input textarea');
-  if(field){field.focus({preventScroll:true});workspaceStatus('');}
-  else workspaceStatus('Tap the Guacamole text field when it appears.');
- }catch(error){workspaceStatus(error.message);}
-};
+  const viewportEvents=new AbortController();
+  w.addEventListener('pagehide',()=>viewportEvents.abort(),{once:true,signal:viewportEvents.signal});
+  const addTypingButton=()=>{
+   const field=doc.querySelector('.text-input .text-input-field textarea.target');
+   if(!field)return false;
+   const shortcuts=field.closest('.text-input')?.querySelector('.text-input-buttons');
+   if(!shortcuts)return false;
+   if(shortcuts.querySelector('.lemon-keyboard-size'))return true;
+   const button=doc.createElement('button');
+   button.type='button';
+   button.className='lemon-keyboard-size';
+   if(!doc.getElementById('lemon-keyboard-row-style')){
+    const style=doc.createElement('style');
+    style.id='lemon-keyboard-row-style';
+    style.textContent=`
+     .text-input .text-input-field {order:-1;min-width:2em;}
+     .text-input .text-input-buttons {display:contents;}
+     .text-input .text-input-buttons .lemon-keyboard-size {order:-2;flex-shrink:0;}
+     .text-input .text-input-buttons guac-key {flex-shrink:0;}
+
+     .text-input .text-input-buttons button {
+      font-size:clamp(12px, 4vw, 16px);
+      min-width:0;
+      max-width:none;
+      padding-inline:0.38em;
+     }
+    `;
+    doc.head.append(style);
+   }
+   button.style.whiteSpace='nowrap';
+   const label=doc.createTextNode('');
+   const icon=doc.createElement('span');
+   icon.textContent=' ⌨';
+   icon.setAttribute('aria-hidden','true');
+   button.append(label,icon);
+   const updateButton=()=>{
+    const expanded=Boolean(viewport && closedViewportHeight-viewport.height*viewport.scale>100);
+    label.data=expanded?'Hide':'Show';
+    button.setAttribute('aria-label',expanded?'Hide keyboard':'Show keyboard');
+    button.setAttribute('aria-expanded',String(expanded));
+   };
+   field.setAttribute('aria-label','Remote keyboard text input');
+   button.addEventListener('mousedown',event=>event.preventDefault());
+   button.addEventListener('click',()=>{
+    if(button.getAttribute('aria-expanded')==='true'){
+     field.blur();
+     releasePhoneModifiers(pane);
+    }else{
+     if(doc.activeElement===field)field.blur();
+     field.focus({preventScroll:true});
+    }
+   });
+   viewport?.addEventListener('resize',updateButton,{signal:viewportEvents.signal});
+   shortcuts.prepend(button);
+   updateButton();
+   return true;
+  };
+  if(!addTypingButton()){
+   // Guacamole may render its text input after the mode changes.
+   const observer=new w.MutationObserver(()=>{
+    if(!keyboardEnabled.has(doc) || addTypingButton())observer.disconnect();
+   });
+   observer.observe(doc.body,{childList:true,subtree:true});
+   w.setTimeout(()=>observer.disconnect(),5000);
+  }
+}catch(error){workspaceStatus(error.message);}
+}
+render();
+updateSessions();setInterval(updateSessions,750);
 }

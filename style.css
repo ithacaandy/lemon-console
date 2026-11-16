@@ -23,3 +23,16 @@ body > header{display:grid;grid-template-columns:minmax(max-content,1fr) max-con
  #desktops{padding:3px;gap:0}
 }
 @media (hover:none){#phone-keyboard[aria-pressed="false"]:hover{background:#263229;color:#dce8d8;border-color:#465748}}
+
+.phone-brand{display:none}
+@media (max-width:680px), (max-width:950px) and (pointer:coarse) and (max-height:550px){
+ body > header{display:none}
+ #desktops{padding:0}
+ #desktops section{border:0;border-radius:0}
+ .phone-brand{display:block;position:absolute;top:10px;left:8px;z-index:2;padding:6px 7px;border-radius:7px;background:#142018ed;font-size:11px;font-weight:700;text-decoration:none;color:inherit;min-height:32px;align-content:center}
+ #desktops section h2{right:8px;max-width:calc(100% - 116px);padding:6px 9px;overflow-wrap:anywhere}
+ #desktops section h2::after{content:"▾";margin-left:7px}
+ #desktops section h2:focus-within{outline:2px solid #d1ed88}
+ #mobile-computer{position:absolute;inset:0;width:100%;height:100%;min-height:0;opacity:0;cursor:pointer}
+}
+#phone-guacamole{padding-top:54px}
